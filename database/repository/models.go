@@ -5,15 +5,25 @@
 package repository
 
 import (
+	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
+
+type Task struct {
+	ID           int32        `json:"id"`
+	Pid          string       `json:"pid"`
+	CreatedAt    time.Time    `json:"created_at"`
+	TechnicianID int32        `json:"technician_id"`
+	Summary      string       `json:"summary"`
+	Status       string       `json:"status"`
+	CompletedAt  sql.NullTime `json:"completed_at"`
+}
 
 type User struct {
 	ID        int32     `json:"id"`
-	Pid       uuid.UUID `json:"pid"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
+	Pid       string    `json:"pid"`
 	CreatedAt time.Time `json:"created_at"`
+	Username  string    `json:"username"`
+	Password  string    `json:"password"`
+	Role      string    `json:"role"`
 }

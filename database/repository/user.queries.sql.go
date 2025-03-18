@@ -7,39 +7,38 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 )
 
-const createUser = `-- name: CreateUser :one
-insert into users (email, password)
-values ( $1, $2) returning id, pid, email, password, created_at
+const createUser = `-- name: CreateUser :execresult
+insert into users (pid, username, password, role)
+values (?, ?, ?, ?)
 `
 
 type CreateUserParams struct {
-	Email    string `json:"email"`
+	Pid      string `json:"pid"`
+	Username string `json:"username"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.Password)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Pid,
-		&i.Email,
-		&i.Password,
-		&i.CreatedAt,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
+	return q.exec(ctx, q.createUserStmt, createUser,
+		arg.Pid,
+		arg.Username,
+		arg.Password,
+		arg.Role,
 	)
-	return i, err
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-select id, pid, email, password, created_at
+select id, pid, created_at, username, password, role
 from users
 order by id desc
 `
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, getAllUsers)
+	rows, err := q.query(ctx, q.getAllUsersStmt, getAllUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -50,16 +49,62 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Pid,
-			&i.Email,
-			&i.Password,
 			&i.CreatedAt,
+			&i.Username,
+			&i.Password,
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
 	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserWithPid = `-- name: GetUserWithPid :one
+select id, pid, created_at, username, password, role
+from users
+where pid = ?
+order by id desc
+`
+
+func (q *Queries) GetUserWithPid(ctx context.Context, pid string) (User, error) {
+	row := q.queryRow(ctx, q.getUserWithPidStmt, getUserWithPid, pid)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Pid,
+		&i.CreatedAt,
+		&i.Username,
+		&i.Password,
+		&i.Role,
+	)
+	return i, err
+}
+
+const getUserWithUsername = `-- name: GetUserWithUsername :one
+select id, pid, created_at, username, password, role
+from users
+where username = ?
+order by id desc
+`
+
+func (q *Queries) GetUserWithUsername(ctx context.Context, username string) (User, error) {
+	row := q.queryRow(ctx, q.getUserWithUsernameStmt, getUserWithUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Pid,
+		&i.CreatedAt,
+		&i.Username,
+		&i.Password,
+		&i.Role,
+	)
+	return i, err
 }

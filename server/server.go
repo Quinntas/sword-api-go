@@ -44,8 +44,8 @@ func setupMiddlewares(app *fiber.App) {
 
 func Create() *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:       "go-fiber-template",
-		ServerHeader:  "go-fiber-template",
+		AppName:       "SwordAPI",
+		ServerHeader:  "SwordAPI",
 		CaseSensitive: false,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -71,25 +71,3 @@ func Listen(app *fiber.App) error {
 
 	return app.Listen(fmt.Sprintf("%s:%s", serverHost, serverPort))
 }
-
-/*
-userRouter := v1Router.Group("/user")
-
-	userRouter.Use(func(c *fiber.Ctx) error {
-		c.Locals("user", "admin")
-		return c.Next()
-	})
-
-	userRouter.Get("/", func(c *fiber.Ctx) error {
-		user, ok := c.Locals("user").(string)
-		if !ok {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal server error",
-			})
-		}
-		fmt.Println(user)
-		return c.JSON(fiber.Map{
-			"message": "ok",
-		})
-	})
-*/

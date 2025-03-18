@@ -3,6 +3,18 @@ select *
 from users
 order by id desc;
 
--- name: CreateUser :one
-insert into users (email, password)
-values ($1, $2) returning *;
+-- name: GetUserWithUsername :one
+select *
+from users
+where username = ?
+order by id desc;
+
+-- name: GetUserWithPid :one
+select *
+from users
+where pid = ?
+order by id desc;
+
+-- name: CreateUser :execresult
+insert into users (pid, username, password, role)
+values (?, ?, ?, ?);

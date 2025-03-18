@@ -1,8 +1,8 @@
 package database
 
 import (
-	"context"
-	"github.com/jackc/pgx/v5"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/quinntas/go-fiber-template/database/repository"
 	"log"
 	"os"
@@ -13,7 +13,8 @@ var (
 )
 
 func SetupDatabase() {
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	databaseUrl := os.Getenv("DATABASE_URL")
+	conn, err := sql.Open("mysql", databaseUrl+"?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -6,4 +6,5 @@ func SetupRoutes(router fiber.Router) {
 	userRouter := router.Group("/users")
 
 	userRouter.Post("/", CreateUser)
+	userRouter.Post("/login", Login)
 }
