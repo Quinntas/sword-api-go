@@ -8,14 +8,14 @@ import (
 	"github.com/quinntas/go-fiber-template/database"
 	"github.com/quinntas/go-fiber-template/database/repository"
 	"github.com/quinntas/go-fiber-template/eventEmitter"
-	user "github.com/quinntas/go-fiber-template/resources/user"
+	"github.com/quinntas/go-fiber-template/resources/user"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"time"
 )
 
 const (
-	PENDING   = "PENDING"
-	COMPLETED = "COMPLETED"
+	StatusPending   = "PENDING"
+	StatusCompleted = "COMPLETED"
 )
 
 func CreateTask(c *fiber.Ctx) error {
@@ -30,7 +30,7 @@ func CreateTask(c *fiber.Ctx) error {
 		})
 	}
 
-	authedUser, ok := c.Locals(user.LOCAL_KEY).(*repository.User)
+	authedUser, ok := c.Locals(user.LocalKey).(*repository.User)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Internal server error",
@@ -42,7 +42,7 @@ func CreateTask(c *fiber.Ctx) error {
 	_, err := database.Repo.CreateTask(context.Background(), repository.CreateTaskParams{
 		Pid:          pid.String(),
 		Summary:      taskDTO.Summary,
-		Status:       PENDING,
+		Status:       StatusPending,
 		TechnicianID: authedUser.ID,
 	})
 	if err != nil {
@@ -55,14 +55,14 @@ func CreateTask(c *fiber.Ctx) error {
 }
 
 func DeleteTask(c *fiber.Ctx) error {
-	authedUser, ok := c.Locals(user.LOCAL_KEY).(*repository.User)
+	authedUser, ok := c.Locals(user.LocalKey).(*repository.User)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Internal server error",
 		})
 	}
 
-	if authedUser.Role != user.MANAGER {
+	if authedUser.Role != user.RoleManager {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Forbidden",
 		})
@@ -91,7 +91,7 @@ func DeleteTask(c *fiber.Ctx) error {
 }
 
 func UpdateTask(c *fiber.Ctx) error {
-	authedUser, ok := c.Locals(user.LOCAL_KEY).(*repository.User)
+	authedUser, ok := c.Locals(user.LocalKey).(*repository.User)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Internal server error",
@@ -155,7 +155,7 @@ func UpdateTask(c *fiber.Ctx) error {
 }
 
 func GetTasks(c *fiber.Ctx) error {
-	authedUser, ok := c.Locals(user.LOCAL_KEY).(*repository.User)
+	authedUser, ok := c.Locals(user.LocalKey).(*repository.User)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Internal server error",
@@ -165,14 +165,14 @@ func GetTasks(c *fiber.Ctx) error {
 	var data []repository.Task
 	var err error
 
-	if authedUser.Role == user.MANAGER {
+	if authedUser.Role == user.RoleManager {
 		data, err = database.Repo.GetAllTasks(context.Background())
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "Failed to fetch tasks",
 			})
 		}
-	} else if authedUser.Role == user.TECHNICIAN {
+	} else if authedUser.Role == user.RoleTechnician {
 		data, err = database.Repo.GetTaskWithTechId(context.Background(), authedUser.ID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

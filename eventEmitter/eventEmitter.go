@@ -158,6 +158,18 @@ func (cm *ChannelManager) ConsumeQueue(channelName, queueName string, handler fu
 	return nil
 }
 
+func (cm *ChannelManager) CreateQueueWithConsumer(channelName, queueName string, consumer func(msg amqp.Delivery)) error {
+	err := cm.CreateQueue(channelName, queueName, true, false, false)
+	if err != nil {
+		return err
+	}
+	err = cm.ConsumeQueue(channelName, queueName, consumer)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // CloseChannel closes a specific channel and all its queues
 func (cm *ChannelManager) CloseChannel(name string) error {
 	cm.mu.Lock()

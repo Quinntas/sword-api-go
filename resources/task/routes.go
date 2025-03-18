@@ -17,12 +17,7 @@ func SetupRoutes(router fiber.Router) {
 }
 
 func SetupEvents(manager *eventEmitter.ChannelManager) {
-	err := manager.CreateQueue(eventEmitter.DefaultChannelName, OnTaskCompleteQueueName, true, false, false)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = manager.ConsumeQueue(eventEmitter.DefaultChannelName, OnTaskCompleteQueueName, OnTaskComplete)
+	err := manager.CreateQueueWithConsumer(eventEmitter.DefaultChannelName, OnTaskCompleteQueueName, OnTaskComplete)
 	if err != nil {
 		log.Fatal(err)
 	}

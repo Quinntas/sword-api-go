@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	MANAGER    = "MANAGER"
-	TECHNICIAN = "TECHNICIAN"
-	LOCAL_KEY  = "USER_LOCAL_KEY"
+	RoleManager    = "MANAGER"
+	RoleTechnician = "TECHNICIAN"
+	LocalKey       = "USER_LOCAL_KEY"
 )
 
 func CreateUser(c *fiber.Ctx) error {
@@ -42,7 +42,7 @@ func CreateUser(c *fiber.Ctx) error {
 		Username: userDTO.Username,
 		Password: password,
 		Pid:      pid.String(),
-		Role:     TECHNICIAN,
+		Role:     RoleTechnician,
 	})
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func EnsureAuthenticated(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Locals(LOCAL_KEY, authedUser)
+	c.Locals(LocalKey, authedUser)
 
 	return c.Next()
 }
