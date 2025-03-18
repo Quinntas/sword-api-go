@@ -2,7 +2,9 @@ package task
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/quinntas/go-fiber-template/eventEmitter"
 	"github.com/quinntas/go-fiber-template/resources/user"
+	"log"
 )
 
 func SetupRoutes(router fiber.Router) {
@@ -12,4 +14,16 @@ func SetupRoutes(router fiber.Router) {
 	taskRouter.Delete("/:taskPid", user.EnsureAuthenticated, DeleteTask)
 	taskRouter.Put("/:taskPid", user.EnsureAuthenticated, UpdateTask)
 	taskRouter.Get("/", user.EnsureAuthenticated, GetTasks)
+}
+
+func SetupEvents(manager *eventEmitter.ChannelManager) {
+	err := manager.CreateQueue(eventEmitter.DefaultChannelName, OnTaskCompleteQueueName, true, false, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = manager.ConsumeQueue(eventEmitter.DefaultChannelName, OnTaskCompleteQueueName, OnTaskComplete)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

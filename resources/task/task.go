@@ -2,11 +2,15 @@ package task
 
 import (
 	"context"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/quinntas/go-fiber-template/database"
 	"github.com/quinntas/go-fiber-template/database/repository"
+	"github.com/quinntas/go-fiber-template/eventEmitter"
 	user "github.com/quinntas/go-fiber-template/resources/user"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"time"
 )
 
 const (
@@ -106,7 +110,7 @@ func UpdateTask(c *fiber.Ctx) error {
 		return err
 	}
 
-	if authedUser.Role != user.MANAGER || authedUser.ID != task.TechnicianID {
+	if authedUser.ID != task.TechnicianID {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Forbidden",
 		})
@@ -125,6 +129,21 @@ func UpdateTask(c *fiber.Ctx) error {
 
 	if updateTaskDTO.Done {
 		err := database.Repo.CompleteTask(context.Background(), task.Pid)
+		if err != nil {
+			return err
+		}
+
+		eventMessage := fmt.Sprintf("The tech with pid %s completed the task with pid %s at %s",
+			authedUser.Pid,
+			task.Pid,
+			time.Now().Format(time.RFC3339),
+		)
+
+		err = eventEmitter.Manager.PublishMessage(
+			eventEmitter.DefaultChannelName,
+			OnTaskCompleteQueueName,
+			[]byte(eventMessage),
+		)
 		if err != nil {
 			return err
 		}
@@ -165,4 +184,12 @@ func GetTasks(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": data,
 	})
+}
+
+const (
+	OnTaskCompleteQueueName = "OnTaskComplete"
+)
+
+func OnTaskComplete(msg amqp.Delivery) {
+	fmt.Println(string(msg.Body))
 }
